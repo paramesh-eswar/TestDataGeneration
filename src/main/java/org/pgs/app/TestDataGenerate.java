@@ -335,7 +335,7 @@ public class TestDataGenerate {
 	 * @param filePath - output file path to store the test data
 	 */
 	private static void writeTestDataToFile(List<String[]> testDataToWrite, String filePath) {
-		try (CSVWriter writer = new CSVWriter(new FileWriter(filePath))) {
+		try (CSVWriter writer = new CSVWriter(new FileWriter(filePath), ',', CSVWriter.NO_QUOTE_CHARACTER, CSVWriter.NO_ESCAPE_CHARACTER, CSVWriter.DEFAULT_LINE_END)) {
 	        for (String[] line : testDataToWrite) {
 	            writer.writeNext(line);
 	        }
