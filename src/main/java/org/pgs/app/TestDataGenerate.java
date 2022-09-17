@@ -10,7 +10,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -193,78 +192,87 @@ public class TestDataGenerate {
 		StringBuffer dataRow = new StringBuffer();
 		Long rowCount = 1L;
 		Random random = new Random();
-		List<String[]> testDataToWrite = new LinkedList<String[]>();
-		testDataToWrite.add(headerRow.toString().split(","));
-		if(!duplicatesAllowed) {
-			while(rowCount<=numOfRows) {
-				i=0;
-				j=0;
-				for(Map.Entry<String, String> entry : colDataTypeLengthMap.entrySet()) {
-					switch (entry.getValue().substring(0, entry.getValue().indexOf("|"))) {
-					case "number": {
-						dataRow = dataRow.append(numGenerators[i].getAndIncrement()+",");
-						i = i<numberCols.size() ? i+1 : 0;
-						break;
+		try (CSVWriter writer = new CSVWriter(new FileWriter(outputFilePath), ',', CSVWriter.NO_QUOTE_CHARACTER, CSVWriter.NO_ESCAPE_CHARACTER, CSVWriter.DEFAULT_LINE_END)) {
+//			List<String[]> testDataToWrite = new LinkedList<String[]>();
+//			testDataToWrite.add(headerRow.toString().split(","));
+			writer.writeNext(headerRow.toString().split(","));
+			if(!duplicatesAllowed) {
+				while(rowCount<=numOfRows) {
+					i=0;
+					j=0;
+					for(Map.Entry<String, String> entry : colDataTypeLengthMap.entrySet()) {
+						switch (entry.getValue().substring(0, entry.getValue().indexOf("|"))) {
+						case "number": {
+							dataRow = dataRow.append(numGenerators[i].getAndIncrement()+",");
+							i = i<numberCols.size() ? i+1 : 0;
+							break;
+						}
+						case "text": {
+							dataRow = dataRow.append(entry.getValue().substring(entry.getValue().indexOf("|")+1, entry.getValue().length()) + "-" + rowCount + ",");
+							break;
+						}
+						case "float": {
+							String[] minAndMax = entry.getValue().substring(entry.getValue().indexOf("|")+1, entry.getValue().length()).split("-");
+							dataRow = dataRow.append(String.format("%.2f", Double.valueOf(minAndMax[0]) + random.nextDouble()*(Double.valueOf(minAndMax[1]) - Double.valueOf(minAndMax[0])))  + ",");
+							break;
+						}
+						case "date": {
+							dataRow = dataRow.append(dateGenerators[j].getRandomDate() + ",");
+							j = j<dateCols.size() ? j+1 : 0;
+							break;
+						}
+						default:
+							throw new IllegalArgumentException("Unexpected value: " + entry.getValue().substring(0, entry.getValue().indexOf("|")));
+						}
 					}
-					case "text": {
-						dataRow = dataRow.append(entry.getValue().substring(entry.getValue().indexOf("|")+1, entry.getValue().length()) + "-" + rowCount + ",");
-						break;
-					}
-					case "float": {
-						String[] minAndMax = entry.getValue().substring(entry.getValue().indexOf("|")+1, entry.getValue().length()).split("-");
-						dataRow = dataRow.append(String.format("%.2f", Double.valueOf(minAndMax[0]) + random.nextDouble()*(Double.valueOf(minAndMax[1]) - Double.valueOf(minAndMax[0])))  + ",");
-						break;
-					}
-					case "date": {
-						dataRow = dataRow.append(dateGenerators[j].getRandomDate() + ",");
-						j = j<dateCols.size() ? j+1 : 0;
-						break;
-					}
-					default:
-						throw new IllegalArgumentException("Unexpected value: " + entry.getValue().substring(0, entry.getValue().indexOf("|")));
-					}
+					dataRow.deleteCharAt(dataRow.lastIndexOf(","));
+					writer.writeNext(dataRow.toString().split(","));
+//					testDataToWrite.add(dataRow.toString().split(","));
+					dataRow.setLength(0);
+					rowCount++;
 				}
-				dataRow.deleteCharAt(dataRow.lastIndexOf(","));
-				testDataToWrite.add(dataRow.toString().split(","));
-				dataRow.setLength(0);
-				rowCount++;
-			}
-		} else {
-			while(rowCount<=numOfRows) {
-				j=0;
-				for(Map.Entry<String, String> entry : colDataTypeLengthMap.entrySet()) {
-					switch (entry.getValue().substring(0, entry.getValue().indexOf("|"))) {
-					case "number": {
-						String[] numRange = entry.getValue().substring(entry.getValue().indexOf("|") + 1, entry.getValue().length()).split("-");
-						dataRow = dataRow.append( (Integer.valueOf(numRange[0]) + (random.nextInt(Integer.valueOf(numRange[1])-Integer.valueOf(numRange[0]))) ) + ",");
-						break;
+			} else {
+				while(rowCount<=numOfRows) {
+					j=0;
+					for(Map.Entry<String, String> entry : colDataTypeLengthMap.entrySet()) {
+						switch (entry.getValue().substring(0, entry.getValue().indexOf("|"))) {
+						case "number": {
+							String[] numRange = entry.getValue().substring(entry.getValue().indexOf("|") + 1, entry.getValue().length()).split("-");
+							dataRow = dataRow.append( (Integer.valueOf(numRange[0]) + (random.nextInt(Integer.valueOf(numRange[1])-Integer.valueOf(numRange[0]))) ) + ",");
+							break;
+						}
+						case "text": {
+							Integer randomVal = 1 + (random.nextInt(numOfRows.intValue() - 1));
+							dataRow = dataRow.append(entry.getValue().substring(entry.getValue().indexOf("|")+1, entry.getValue().length()) + "-" + randomVal + ",");
+							break;
+						}
+						case "float": {
+							String[] minAndMax = entry.getValue().substring(entry.getValue().indexOf("|")+1, entry.getValue().length()).split("-");
+							dataRow = dataRow.append(String.format("%.2f", Double.valueOf(minAndMax[0]) + (random.nextDouble()*(Double.valueOf(minAndMax[1]) - Double.valueOf(minAndMax[0]))))  + ",");
+							break;
+						}
+						case "date": {
+							dataRow = dataRow.append(dateGenerators[j].getRandomDate() + ",");
+							j = j<dateCols.size() ? j+1 : 0;
+							break;
+						}
+						default:
+							throw new IllegalArgumentException("Unexpected value: " + entry.getValue().substring(0, entry.getValue().indexOf("|")));
+						}
 					}
-					case "text": {
-						Integer randomVal = 1 + (random.nextInt(numOfRows.intValue() - 1));
-						dataRow = dataRow.append(entry.getValue().substring(entry.getValue().indexOf("|")+1, entry.getValue().length()) + "-" + randomVal + ",");
-						break;
-					}
-					case "float": {
-						String[] minAndMax = entry.getValue().substring(entry.getValue().indexOf("|")+1, entry.getValue().length()).split("-");
-						dataRow = dataRow.append(String.format("%.2f", Double.valueOf(minAndMax[0]) + (random.nextDouble()*(Double.valueOf(minAndMax[1]) - Double.valueOf(minAndMax[0]))))  + ",");
-						break;
-					}
-					case "date": {
-						dataRow = dataRow.append(dateGenerators[j].getRandomDate() + ",");
-						j = j<dateCols.size() ? j+1 : 0;
-						break;
-					}
-					default:
-						throw new IllegalArgumentException("Unexpected value: " + entry.getValue().substring(0, entry.getValue().indexOf("|")));
-					}
+					dataRow.deleteCharAt(dataRow.lastIndexOf(","));
+					writer.writeNext(dataRow.toString().split(","));
+//					testDataToWrite.add(dataRow.toString().split(","));
+					dataRow.setLength(0);
+					rowCount++;
 				}
-				dataRow.deleteCharAt(dataRow.lastIndexOf(","));
-				testDataToWrite.add(dataRow.toString().split(","));
-				dataRow.setLength(0);
-				rowCount++;
 			}
-		}
-		writeTestDataToFile(testDataToWrite, outputFilePath);
+		} catch (Exception e) {
+        	e.printStackTrace();
+        	System.out.println("Un expected error occured while writing the data to file!!");
+        }
+//		writeTestDataToFile(testDataToWrite, outputFilePath);
+		System.out.println("Test data generation completed successfully!!\nOutput file location: " + filePath);
 		return true;
 	}
 
