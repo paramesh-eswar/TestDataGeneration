@@ -1,1 +1,1 @@
-account_id|number|7-17,account_number|number|10-20,account_company|text|AccountCompany,registration_type|text|RegType,transaction_amount|float|100.00-10000.00,transaction_date|date|15/09/2020-15/09/2022
+account_id|number|10-20,account_number|number|20-30,account_company|text|AccountCompany,registration_type|text|RegType,transaction_amount|float|100.00-1000.00,transaction_date|date|15/09/2020-15/09/2022
