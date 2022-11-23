@@ -906,10 +906,13 @@ public class TestDataGeneratorV3 {
 				dataRow.deleteCharAt(dataRow.lastIndexOf(","));
 				synchronized (writer) {
 					writer.writeNext(dataRow.toString().split(","));
+					dataRow.setLength(0);
+					rowCount++;
 				}
-//				writer.writeNext(dataRow.toString().split(","));
-				dataRow.setLength(0);
-				rowCount++;
+				/*
+				 * writer.writeNext(dataRow.toString().split(",")); dataRow.setLength(0);
+				 * rowCount++;
+				 */
 			}
 			this.isBusy = false;
 		}
