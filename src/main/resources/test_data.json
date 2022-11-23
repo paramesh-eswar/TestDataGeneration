@@ -4,7 +4,7 @@
 		"datatype":"number", 
 		"range":"10~20", 
 		"default_value":"",
-		"duplicates_allowed":"yes"
+		"duplicates_allowed":"no"
 	},
 	{
 		"name":"account_company", 
@@ -27,7 +27,7 @@
 		"range":"08/15/2020~09/15/2022", 
 		"default_value":"",
 		"date_format":"MM/dd/yyyy",
-		"duplicates_allowed":"no"
+		"duplicates_allowed":"yes"
 	},
 	{
 		"name":"account_holder_gender", 

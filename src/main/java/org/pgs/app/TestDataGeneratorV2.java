@@ -257,7 +257,10 @@ public class TestDataGeneratorV2 {
 							}
 						} else {
 							JSONArray range = (JSONArray) entry.getValue().get("range");
-							dataRow = dataRow.append(range.get(random.nextInt(range.toArray().length)) + ",");
+							if(range.toArray().length > 0)
+								dataRow = dataRow.append(range.get(random.nextInt(range.toArray().length)) + ",");
+							else
+								dataRow = dataRow.append(entry.getValue().get("name").toString() + "-" + rowCount + ",");
 						}
 						break;
 					}
@@ -615,12 +618,8 @@ public class TestDataGeneratorV2 {
 							continue;
 						}
 						JSONArray range = (JSONArray) entry.getValue().get("range");
-						if(range.toArray().length == 0) {
-							errorMessages.append("Invalid range values for the attribute " + entry.getKey() + "\n");
-							continue;
-						}
 						if(("no").equalsIgnoreCase(entry.getValue().get("duplicates_allowed").toString().trim())) {
-							if(range.toArray().length < numOfRows) {
+							if(range.toArray().length > 0 && range.toArray().length < numOfRows) {
 								errorMessages.append("Range is always greater than or equal to the number of rows for the attribute " + entry.getKey() + "\n");
 								continue;
 							}
