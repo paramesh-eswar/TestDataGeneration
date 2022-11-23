@@ -610,7 +610,7 @@ public class TestDataGeneratorV3 {
 			}
 		}
 		
-		private synchronized void writeDataToFile(Long rowCount, Long endCount, Map<String, JSONObject> metaData, JSONObject descriptorJson, Map<String, AtomicLong> numGenerators, Map<String, DateGenerator> dateGenerators, Map<String, Integer> rangeSequence, Map<String, Double> floatSequence, Map<String, ArrayList<String>> rangeSeq) {
+		private void writeDataToFile(Long rowCount, Long endCount, Map<String, JSONObject> metaData, JSONObject descriptorJson, Map<String, AtomicLong> numGenerators, Map<String, DateGenerator> dateGenerators, Map<String, Integer> rangeSequence, Map<String, Double> floatSequence, Map<String, ArrayList<String>> rangeSeq) {
 			StringBuffer dataRow = new StringBuffer();
 			Faker fakeDataGenerator = new Faker();
 			Random random = new Random();
@@ -904,7 +904,10 @@ public class TestDataGeneratorV3 {
 					}
 				}
 				dataRow.deleteCharAt(dataRow.lastIndexOf(","));
-				writer.writeNext(dataRow.toString().split(","));
+				synchronized (writer) {
+					writer.writeNext(dataRow.toString().split(","));
+				}
+//				writer.writeNext(dataRow.toString().split(","));
 				dataRow.setLength(0);
 				rowCount++;
 			}
