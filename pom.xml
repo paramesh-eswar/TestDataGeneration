@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.pgs</groupId>
-	<artifactId>TestDataGeneration</artifactId>
+	<artifactId>testdatagenerator</artifactId>
 	<version>v3.0.1-SNAPSHOT</version>
 	<name>TestDataGeneration</name>
 	<description>This project is for to automate test data generation</description>
