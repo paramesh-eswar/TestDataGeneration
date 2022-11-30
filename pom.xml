@@ -7,6 +7,14 @@
 	<version>v3.0.1-SNAPSHOT</version>
 	<name>TestDataGeneration</name>
 	<description>This project is for to automate test data generation</description>
+	
+	<distributionManagement>
+	   <repository>
+	     <id>github</id>
+	     <name>GitHub paramesh-eswar Apache Maven Packages</name>
+	     <url>https://maven.pkg.github.com/paramesh-eswar/TestDataGeneration</url>
+	   </repository>
+	</distributionManagement>
 
 	<dependencies>
 		<dependency>
