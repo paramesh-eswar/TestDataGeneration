@@ -134,7 +134,7 @@ public class TestDataGeneratorV3 {
 	 * @param numOfRows - total number of rows expected in test data after generation
 	 * @return - boolean value to represent whether data generated successfully or not
 	 */
-	private boolean generateTestData(String inputFilePath, Long numOfRows) {
+	public boolean generateTestData(String inputFilePath, Long numOfRows) {
 		String fileName = null, filePath = null, outputFilePath = null;
 		File inputFile = null;
 		try {
