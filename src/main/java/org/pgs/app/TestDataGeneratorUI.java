@@ -1,27 +1,20 @@
 package org.pgs.app;
 
+import java.awt.Color;
 import java.awt.EventQueue;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
-import javax.swing.JLabel;
 import java.awt.Font;
-import java.awt.LayoutManager;
-import java.awt.LayoutManager2;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
-import javax.swing.SwingConstants;
-import javax.swing.JTextField;
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
-
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.JTextPane;
-import java.awt.Color;
+import javax.swing.SwingConstants;
+import javax.swing.border.EmptyBorder;
 
 public class TestDataGeneratorUI extends JFrame {
 
