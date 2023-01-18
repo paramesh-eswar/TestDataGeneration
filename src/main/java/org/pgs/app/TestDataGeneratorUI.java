@@ -150,7 +150,6 @@ public class TestDataGeneratorUI extends JFrame {
 						JOptionPane.showMessageDialog(null,"Number of rows should be whole number", "Invalid number of rows!", JOptionPane.INFORMATION_MESSAGE);
 					}
 				}
-//				btnGenerateData.setEnabled(true);
 			}
 		});
 	}

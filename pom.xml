@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.pgs</groupId>
 	<artifactId>testdatagenerator</artifactId>
-	<version>v3.0.1-SNAPSHOT</version>
+	<version>v3.1.1-SNAPSHOT</version>
 	<name>TestDataGeneration</name>
 	<description>This project is for to automate test data generation</description>
 	
@@ -100,7 +100,7 @@
 				<configuration>
 					<archive>
 						<manifest>
-							<mainClass>org.pgs.app.TestDataGeneratorV3</mainClass>
+							<mainClass>org.pgs.app.TestDataGeneratorUI</mainClass>
 						</manifest>
 					</archive>
 					<descriptorRefs>
