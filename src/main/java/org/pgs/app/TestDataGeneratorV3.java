@@ -33,6 +33,7 @@ public class TestDataGeneratorV3 {
 	private static String inputFilePath = "";
 	private static Long numOfRows = 0l;
 	private static String DESCRIPTOR_FILE_PATH = "descriptor.json";
+	public StringBuilder errorMessage = new StringBuilder();
 //	private static CSVWriter writer;
 
 	public static void main(String[] args) throws Exception{
@@ -177,6 +178,7 @@ public class TestDataGeneratorV3 {
 		} catch (ParseException e) {
 			e.printStackTrace();
 			System.out.println("Metadata not in expected format. Please change it and re-run to generate test data");
+			errorMessage.append("Metadata not in expected format. Please change it and re-run to generate test data\n");
 			return false;
 		} catch(Exception e) {
 	    	e.printStackTrace();
@@ -191,6 +193,10 @@ public class TestDataGeneratorV3 {
 			System.out.println("============================");
 			System.out.println(errors);
 			System.out.println("============================");
+			errorMessage.append("Metadata not in expected format. Please change below and re-run to generate test data.\n");
+			errorMessage.append("============================\n");
+			errorMessage.append(errors);
+			errorMessage.append("============================\n");
 			return false;
 		}
 		
@@ -255,12 +261,15 @@ public class TestDataGeneratorV3 {
 					break;
 			}
 			System.out.println("Wait is over");
+			errorMessage.append("Wait is over\n");
 		} catch (Exception e) {
         	e.printStackTrace();
         	System.out.println("Un expected error occured while writing the data to file!!");
+        	errorMessage.append("Un expected error occured while writing the data to file!!\n");
         }
 		
 		System.out.println("Test data generation completed successfully!!\nOutput file location: " + outputFilePath);
+		errorMessage.append("Test data generation completed successfully!!\nOutput file location: " + outputFilePath);
 		return true;
 	}
 
