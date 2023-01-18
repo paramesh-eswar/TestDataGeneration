@@ -15,12 +15,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.JTextPane;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
-import javax.swing.text.Document;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
 
 public class TestDataGeneratorUI extends JFrame {
 
@@ -97,17 +93,6 @@ public class TestDataGeneratorUI extends JFrame {
 		btnGenerateData.setEnabled(false);
 		contentPane.add(btnGenerateData);
 		
-//		JTextPane resultPane = new JTextPane();
-//		resultPane.setEnabled(false);
-//		resultPane.setEditable(false);
-//		resultPane.setBounds(50, 225, 679, 186);
-//		contentPane.add(resultPane);
-		
-		JLabel tdgMessage = new JLabel("");
-		tdgMessage.setBounds(75, 200, 133, 23);
-		tdgMessage.setFont(new Font("serif", Font.PLAIN, 14));
-		contentPane.add(tdgMessage);
-		
 		JTextArea resultPane = new JTextArea();
 		resultPane.setEnabled(false);
 		resultPane.setEditable(false);
@@ -147,25 +132,15 @@ public class TestDataGeneratorUI extends JFrame {
 							TestDataGeneratorUI.this.dispose();
 							JOptionPane.showMessageDialog(null,"Number of rows should be whole number", "Invalid number of rows!", JOptionPane.INFORMATION_MESSAGE);
 						} else {
-//							Document doc = resultPane.getDocument();
-//							SimpleAttributeSet keyWord = new SimpleAttributeSet();
-//							StyleConstants.setBold(keyWord, true);
 							try {
-//								resultPane.getDocument().remove(0, doc.getLength());
-//								resultPane.getDocument().insertString(0, "", null);
-								resultPane.setText("Test data generation is in progress ...\n");
-								tdgMessage.setText("Test data generation is in progress ...\n");
-//								doc.insertString(0, "Test data generation is in progress ...\n", keyWord);
+//								resultPane.setText("Test data generation is in progress ...\n");
 								long startTime = System.currentTimeMillis();
 								boolean isDataGenerated = tdg.generateTestData(filePath, numOfRows);
-//								TestDataGeneratorUI.this.dispose();
 								long endTime = System.currentTimeMillis();
 								resultPane.append(tdg.errorMessage.toString() + "\n");
-//							    doc.insertString(doc.getLength(), tdg.errorMessage.toString() + "\n", keyWord);
 							    if(isDataGenerated) {
 							    	JOptionPane.showMessageDialog(null, tdg.errorMessage.toString() + "\nTime taken to generate test data: " + ((endTime-startTime)/1000) + " sec", "Data generated successfully!", JOptionPane.INFORMATION_MESSAGE);
 							    	resultPane.append("Time taken to generate test data: " + ((endTime-startTime)/1000) + " sec");
-//							    	doc.insertString(doc.getLength(), "Time taken to generate test data: " + ((endTime-startTime)/1000) + " sec", keyWord);
 							    }
 							} catch (Exception e) {
 								System.out.println(e);
