@@ -143,6 +143,7 @@ public class TestDataGeneratorUI extends JFrame {
 							    	resultPane.append("Time taken to generate test data: " + ((endTime-startTime)/1000) + " sec");
 							    }
 							} catch (Exception e) {
+								JOptionPane.showMessageDialog(null, tdg.errorMessage.toString(), "Error in Test Data Generation", JOptionPane.INFORMATION_MESSAGE);
 								System.out.println(e);
 							}
 						}
