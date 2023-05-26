@@ -1,6 +1,7 @@
 package org.pgs.app;
 
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
@@ -132,8 +133,9 @@ public class TestDataGeneratorUI extends JFrame {
 							TestDataGeneratorUI.this.dispose();
 							JOptionPane.showMessageDialog(null,"Number of rows should be whole number", "Invalid number of rows!", JOptionPane.INFORMATION_MESSAGE);
 						} else {
+							contentPane.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 							try {
-//								resultPane.setText("Test data generation is in progress ...\n");
+								// resultPane.setText("Test data generation is in progress ...\n");
 								long startTime = System.currentTimeMillis();
 								boolean isDataGenerated = tdg.generateTestData(filePath, numOfRows);
 								long endTime = System.currentTimeMillis();
@@ -146,6 +148,7 @@ public class TestDataGeneratorUI extends JFrame {
 								JOptionPane.showMessageDialog(null, tdg.errorMessage.toString(), "Error in Test Data Generation", JOptionPane.INFORMATION_MESSAGE);
 								System.out.println(e);
 							}
+							contentPane.setCursor(Cursor.getDefaultCursor());
 						}
 					} catch (NumberFormatException nfe) {
 						JOptionPane.showMessageDialog(null,"Number of rows should be whole number", "Invalid number of rows!", JOptionPane.INFORMATION_MESSAGE);
