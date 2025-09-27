@@ -1,0 +1,47 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "TestDataGeneratorUI",
+      "request": "launch",
+      "mainClass": "org.pgs.app.TestDataGeneratorUI",
+      "projectName": "testdatagenerator"
+      , "preLaunchTask": "maven-package-skip-tests"
+    },
+    {
+      "type": "java",
+      "name": "Debug TestDataGeneratorV3 (with args)",
+      "request": "launch",
+      "mainClass": "org.pgs.app.TestDataGeneratorV3",
+      "projectName": "TestDataGeneration",
+      "cwd": "${workspaceFolder}",
+      "args": "${workspaceFolder}/src/main/resources/test_data.json 100",
+      "vmArgs": "-Dapp.debug=true -Dapp.logFile=${workspaceFolder}/logs/testdatageneratorv3.log"
+      , "preLaunchTask": "maven-package-skip-tests"
+    },
+    {
+      "type": "java",
+      "name": "Debug TestDataGeneratorUI (Swing)",
+      "request": "launch",
+      "mainClass": "org.pgs.app.TestDataGeneratorUI",
+      "projectName": "TestDataGeneration",
+      "cwd": "${workspaceFolder}",
+      "args": "",
+      "vmArgs": "-Dapp.debug=true -Dapp.logFile=${workspaceFolder}/logs/testdatageneratorui.log"
+      , "preLaunchTask": "maven-package-skip-tests"
+    }
+    ,
+    {
+      "type": "java",
+      "name": "Run Assembled Jar (task)",
+      "request": "launch",
+      "mainClass": "org.pgs.app.TestDataGeneratorV3",
+      "projectName": "TestDataGeneration",
+      "cwd": "${workspaceFolder}",
+      "args": "",
+      "vmArgs": "",
+      "preLaunchTask": "run-assembled-jar"
+    }
+  ]
+}

@@ -174,7 +174,7 @@ public class TestDataGeneratorV2 {
 	    			}
 	    		}
 			}
-	    } catch (FileNotFoundException e) {
+		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (ParseException e) {
 			e.printStackTrace();
@@ -182,8 +182,8 @@ public class TestDataGeneratorV2 {
 			return false;
 		} catch(Exception e) {
 	    	e.printStackTrace();
-	    }
-	    headerRow.deleteCharAt(headerRow.lastIndexOf(","));
+		}
+		headerRow.deleteCharAt(headerRow.lastIndexOf(","));
 		System.out.println("Test data generation is in progress ...");
 		
 		//validate the input metadata
@@ -226,9 +226,9 @@ public class TestDataGeneratorV2 {
 				for(Map.Entry<String, JSONObject> entry : metaData.entrySet()) {
 					switch (entry.getValue().get("datatype").toString()) {
 					case "number": {
-						if(entry.getValue().get("default_value").toString() != "" && entry.getValue().get("default_value").toString().trim() != "")
+						if(!Util.isBlank(entry.getValue().get("default_value")))
 							dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
-						else if(entry.getValue().get("duplicates_allowed").toString() != "" 
+						else if(!Util.isBlank(entry.getValue().get("duplicates_allowed")) 
 								&& ("no").equalsIgnoreCase(entry.getValue().get("duplicates_allowed").toString().trim()))
 							dataRow = dataRow.append(numGenerators.get(entry.getKey()).getAndIncrement() + ",");
 						else {
@@ -238,9 +238,9 @@ public class TestDataGeneratorV2 {
 						break;
 					}
 					case "text": {
-						if(entry.getValue().get("default_value").toString() != "" && entry.getValue().get("default_value").toString().trim() != "")
+						if(!Util.isBlank(entry.getValue().get("default_value")))
 							dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
-						else if(entry.getValue().get("duplicates_allowed").toString() != "" 
+						else if(!Util.isBlank(entry.getValue().get("duplicates_allowed")) 
 								&& ("no").equalsIgnoreCase(entry.getValue().get("duplicates_allowed").toString().trim())) {
 							JSONArray range = (JSONArray) entry.getValue().get("range");
 							if(range.toArray().length > 0) {
@@ -265,9 +265,9 @@ public class TestDataGeneratorV2 {
 						break;
 					}
 					case "float": {
-						if(entry.getValue().get("default_value").toString() != "" && entry.getValue().get("default_value").toString().trim() != "")
+						if(!Util.isBlank(entry.getValue().get("default_value")))
 							dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
-						else if(entry.getValue().get("duplicates_allowed").toString() != "" 
+						else if(!Util.isBlank(entry.getValue().get("duplicates_allowed")) 
 								&& ("no").equalsIgnoreCase(entry.getValue().get("duplicates_allowed").toString().trim())) {
 							String[] floatRange = entry.getValue().get("range").toString().split("~");
 							int scale = Integer.valueOf(entry.getValue().get("scale").toString());
@@ -290,9 +290,9 @@ public class TestDataGeneratorV2 {
 						break;
 					}
 					case "date": {
-						if(entry.getValue().get("default_value").toString() != "" && entry.getValue().get("default_value").toString().trim() != "")
+						if(!Util.isBlank(entry.getValue().get("default_value")))
 							dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
-						else if(entry.getValue().get("duplicates_allowed").toString() != "" 
+						else if(!Util.isBlank(entry.getValue().get("duplicates_allowed")) 
 								&& ("no").equalsIgnoreCase(entry.getValue().get("duplicates_allowed").toString().trim()))
 							dataRow = dataRow.append(dateGenerators.get(entry.getKey()).getAndIncrement() + ",");
 						else
@@ -301,9 +301,9 @@ public class TestDataGeneratorV2 {
 					}
 					case "gender": {
 						JSONObject genderObj = (JSONObject) descriptorJson.get("gender");
-						if(entry.getValue().get("default_value").toString() != "" && entry.getValue().get("default_value").toString().trim() != "")
+						if(!Util.isBlank(entry.getValue().get("default_value")))
 							dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
-						else if(entry.getValue().get("format").toString() != "" 
+						else if(!Util.isBlank(entry.getValue().get("format")) 
 								&& entry.getValue().get("format").toString().trim() != "") {
 							JSONArray range = ("long").equalsIgnoreCase(entry.getValue().get("format").toString()) ? 
 									(JSONArray) genderObj.get("range") : (JSONArray) genderObj.get("short-range");
@@ -313,9 +313,9 @@ public class TestDataGeneratorV2 {
 					}
 					case "boolean": {
 						JSONObject booleanObj = (JSONObject) descriptorJson.get("boolean");
-						if(entry.getValue().get("default_value").toString() != "" && entry.getValue().get("default_value").toString().trim() != "")
+						if(!Util.isBlank(entry.getValue().get("default_value")))
 							dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
-						else if(entry.getValue().get("format").toString() != "" 
+						else if(!Util.isBlank(entry.getValue().get("format")) 
 								&& entry.getValue().get("format").toString().trim() != "") {
 							JSONArray range = ("long").equalsIgnoreCase(entry.getValue().get("format").toString()) ? 
 									(JSONArray) booleanObj.get("range") : (JSONArray) booleanObj.get("short-range");
@@ -324,10 +324,10 @@ public class TestDataGeneratorV2 {
 						break;
 					}
 					case "ssn": {
-						if(entry.getValue().get("default_value").toString() != "" && entry.getValue().get("default_value").toString().trim() != "")
-							dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
-						else if(entry.getValue().get("duplicates_allowed").toString() != "" 
-								&& ("no").equalsIgnoreCase(entry.getValue().get("duplicates_allowed").toString().trim())) {
+							if(!Util.isBlank(entry.getValue().get("default_value")))
+								dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
+							else if(!Util.isBlank(entry.getValue().get("duplicates_allowed")) 
+									&& ("no").equalsIgnoreCase(entry.getValue().get("duplicates_allowed").toString().trim())) {
 							ArrayList<String> ssnNumberList;
 							String ssnNumber = new String();
 							if(rangeSeq.containsKey(entry.getValue().get("name").toString())) {
@@ -348,10 +348,10 @@ public class TestDataGeneratorV2 {
 						break;
 					}
 					case "creditcard": {
-						if(entry.getValue().get("default_value").toString() != "" && entry.getValue().get("default_value").toString().trim() != "")
-							dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
-						else if(entry.getValue().get("duplicates_allowed").toString() != "" 
-								&& ("no").equalsIgnoreCase(entry.getValue().get("duplicates_allowed").toString().trim())) {
+							if(!Util.isBlank(entry.getValue().get("default_value")))
+								dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
+							else if(!Util.isBlank(entry.getValue().get("duplicates_allowed")) 
+									&& ("no").equalsIgnoreCase(entry.getValue().get("duplicates_allowed").toString().trim())) {
 							ArrayList<String> creditcardNumberList;
 							String ccnumber = "";
 							if(rangeSeq.containsKey(entry.getValue().get("name").toString())) {
@@ -373,10 +373,10 @@ public class TestDataGeneratorV2 {
 						break;
 					}
 					case "email": {
-						if(entry.getValue().get("default_value").toString() != "" && entry.getValue().get("default_value").toString().trim() != "")
-							dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
-						else if(entry.getValue().get("duplicates_allowed").toString() != "" 
-								&& ("no").equalsIgnoreCase(entry.getValue().get("duplicates_allowed").toString().trim())) {
+							if(!Util.isBlank(entry.getValue().get("default_value")))
+								dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
+							else if(!Util.isBlank(entry.getValue().get("duplicates_allowed")) 
+									&& ("no").equalsIgnoreCase(entry.getValue().get("duplicates_allowed").toString().trim())) {
 							ArrayList<String> emailsList;
 							String email = "";
 							if(rangeSeq.containsKey(entry.getValue().get("name").toString())) {
@@ -397,10 +397,10 @@ public class TestDataGeneratorV2 {
 						break;
 					}
 					case "phonenumber": {
-						if(entry.getValue().get("default_value").toString() != "" && entry.getValue().get("default_value").toString().trim() != "")
-							dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
-						else if(entry.getValue().get("duplicates_allowed").toString() != "" 
-								&& ("no").equalsIgnoreCase(entry.getValue().get("duplicates_allowed").toString().trim())) {
+							if(!Util.isBlank(entry.getValue().get("default_value")))
+								dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
+							else if(!Util.isBlank(entry.getValue().get("duplicates_allowed")) 
+									&& ("no").equalsIgnoreCase(entry.getValue().get("duplicates_allowed").toString().trim())) {
 							ArrayList<String> phoneNumbersList;
 							String phoneNumber = "";
 							if(rangeSeq.containsKey(entry.getValue().get("name").toString())) {
@@ -421,8 +421,8 @@ public class TestDataGeneratorV2 {
 						break;
 					}
 					case "zipcode": {
-						if(entry.getValue().get("default_value").toString() != "" && entry.getValue().get("default_value").toString().trim() != "")
-							dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
+							if(!Util.isBlank(entry.getValue().get("default_value")))
+								dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
 						/*
 						 * else if(entry.getValue().get("duplicates_allowed").toString() != "" &&
 						 * ("no").equalsIgnoreCase(entry.getValue().get("duplicates_allowed").toString()
@@ -443,21 +443,21 @@ public class TestDataGeneratorV2 {
 						break;
 					}
 					case "uuid": {
-						if(entry.getValue().get("default_value").toString() != "" && entry.getValue().get("default_value").toString().trim() != "")
-							dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
-						else {
-							String regex = ((JSONObject) descriptorJson.get("uuid")).get("uuid").toString();
-							dataRow = dataRow.append(fakeDataGenerator.regexify(regex) + ",");
-						}
+							if(!Util.isBlank(entry.getValue().get("default_value")))
+								dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
+							else {
+								String regex = ((JSONObject) descriptorJson.get("uuid")).get("uuid").toString();
+								dataRow = dataRow.append(fakeDataGenerator.regexify(regex) + ",");
+							}
 						break;
 					}
 					case "ipaddress": {
 						JSONObject ipaddressObj = (JSONObject) descriptorJson.get("ipaddress");
-						if(entry.getValue().get("default_value").toString() != "" && entry.getValue().get("default_value").toString().trim() != "")
-							dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
-						else if(entry.getValue().get("ipaddress_type").toString() != "" && 
-								(("ipv4").equalsIgnoreCase(entry.getValue().get("ipaddress_type").toString().trim())) || 
-								(("ipv6").equalsIgnoreCase(entry.getValue().get("ipaddress_type").toString().trim()))) {
+							if(!Util.isBlank(entry.getValue().get("default_value")))
+								dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
+							else if(!Util.isBlank(entry.getValue().get("ipaddress_type")) && 
+									(("ipv4").equalsIgnoreCase(entry.getValue().get("ipaddress_type").toString().trim()) || 
+									("ipv6").equalsIgnoreCase(entry.getValue().get("ipaddress_type").toString().trim()))) {
 							String ipaddressRegex = ("ipv4").equalsIgnoreCase(entry.getValue().get("ipaddress_type").toString()) ? 
 									ipaddressObj.get("ipv4").toString() : ipaddressObj.get("ipv6").toString();
 							dataRow = dataRow.append(fakeDataGenerator.regexify(ipaddressRegex) + ",");
@@ -470,9 +470,9 @@ public class TestDataGeneratorV2 {
 					}
 					case "timestamp": {
 //						JSONObject timestampObj = (JSONObject) descriptorJson.get("timestamp");
-						if(entry.getValue().get("default_value").toString() != "" && entry.getValue().get("default_value").toString().trim() != "")
-							dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
-						else if(entry.getValue().get("timestamp_format").toString() != "" && entry.getValue().get("timestamp_format").toString().trim() != ""){
+							if(!Util.isBlank(entry.getValue().get("default_value")))
+								dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
+							else if(!Util.isBlank(entry.getValue().get("timestamp_format")) && entry.getValue().get("timestamp_format").toString().trim() != ""){
 							/*
 							 * String timestampRegex = timestampObj.get("format").toString(); dataRow =
 							 * dataRow.append(fakeDataGenerator.regexify(timestampRegex) + ",");
@@ -487,10 +487,10 @@ public class TestDataGeneratorV2 {
 					case "aadhar": {
 						JSONObject aadharObj = (JSONObject) descriptorJson.get("aadhar");
 						String aadharRegex = aadharObj.get("format").toString();
-						if(entry.getValue().get("default_value").toString() != "" && entry.getValue().get("default_value").toString().trim() != "")
-							dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
-						else if(entry.getValue().get("duplicates_allowed").toString() != "" 
-								&& ("no").equalsIgnoreCase(entry.getValue().get("duplicates_allowed").toString().trim())) {
+							if(!Util.isBlank(entry.getValue().get("default_value")))
+								dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
+							else if(!Util.isBlank(entry.getValue().get("duplicates_allowed")) 
+									&& ("no").equalsIgnoreCase(entry.getValue().get("duplicates_allowed").toString().trim())) {
 							ArrayList<String> aadharNumberList;
 							String aadharNumber = new String();
 							if(rangeSeq.containsKey(entry.getValue().get("name").toString())) {
@@ -522,8 +522,8 @@ public class TestDataGeneratorV2 {
 		} catch (Exception e) {
         	e.printStackTrace();
         	System.out.println("Un expected error occured while writing the data to file!!");
-        }
-		
+		}
+        
 		System.out.println("Test data generation completed successfully!!\nOutput file location: " + outputFilePath);
 		return true;
 	}
@@ -531,8 +531,7 @@ public class TestDataGeneratorV2 {
 	private static String getCreditCardNumber(Faker fakeDataGenerator, Map.Entry<String, JSONObject> entry) {
 		CreditCardType ccType = null;
 		String ccnumber = "";
-		if(entry.getValue().get("cctype").toString() != "" && 
-				entry.getValue().get("cctype").toString().trim() != "" && 
+		if(!Util.isBlank(entry.getValue().get("cctype")) && 
 				!("any").equalsIgnoreCase(entry.getValue().get("cctype").toString().trim()))
 			ccType = CreditCardType.valueOf(entry.getValue().get("cctype").toString().toUpperCase());
 		if(ccType != null)

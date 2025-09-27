@@ -270,7 +270,7 @@ public class TestDataGenerate {
 		} catch (Exception e) {
         	e.printStackTrace();
         	System.out.println("Un expected error occured while writing the data to file!!");
-        }
+		}
 //		writeTestDataToFile(testDataToWrite, outputFilePath);
 		System.out.println("Test data generation completed successfully!!\nOutput file location: " + filePath);
 		return true;
@@ -350,7 +350,7 @@ public class TestDataGenerate {
 		} catch (Exception e) {
         	e.printStackTrace();
         	System.out.println("Un expected error occured while writing the data to file!!");
-        }
+		}
 		System.out.println("Test data generation completed successfully!!\nOutput file location: " + filePath);
 	}
 

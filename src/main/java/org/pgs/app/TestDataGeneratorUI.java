@@ -37,7 +37,7 @@ public class TestDataGeneratorUI extends JFrame {
 					TestDataGeneratorUI frame = new TestDataGeneratorUI();
 					frame.setVisible(true);
 				} catch (Exception e) {
-					e.printStackTrace();
+					AppLogger.error(e.toString());
 				}
 			}
 		});
@@ -146,7 +146,7 @@ public class TestDataGeneratorUI extends JFrame {
 							    }
 							} catch (Exception e) {
 								JOptionPane.showMessageDialog(null, tdg.errorMessage.toString(), "Error in Test Data Generation", JOptionPane.INFORMATION_MESSAGE);
-								System.out.println(e);
+								AppLogger.error(e.toString());
 							}
 							contentPane.setCursor(Cursor.getDefaultCursor());
 						}
