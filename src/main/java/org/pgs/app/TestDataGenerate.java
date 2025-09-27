@@ -70,9 +70,6 @@ public class TestDataGenerate {
 	private static class NumberGenerator {
 		private Long initialValue = 1L;
 		
-		public NumberGenerator() {
-		}
-		
 		public NumberGenerator(Long initialValue) {
 			this.initialValue = initialValue > 0 ? initialValue : 1;
 		}

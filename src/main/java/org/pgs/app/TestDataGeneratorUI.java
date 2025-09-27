@@ -25,7 +25,7 @@ public class TestDataGeneratorUI extends JFrame {
 	private JPanel contentPane;
 	private JTextField numOfRowsTxtFld;
 	private JTextField filenameTxtFld;
-	private TestDataGeneratorV3 tdg = new TestDataGeneratorV3();
+	private TestDataGeneratorV4 tdg = new TestDataGeneratorV4();
 
 	/**
 	 * Launch the application.
