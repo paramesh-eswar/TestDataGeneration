@@ -1,97 +1,117 @@
 ## Quick orientation
 
-This is a small Java CLI app that generates CSV test data from a metadata JSON descriptor.
-It reads a metadata file (JSON array of attribute descriptors), consults a bundled
-`descriptor.json` (in `src/main/resources`) for value-format templates, and writes a
-CSV output file next to the input metadata file named `<input>_output.csv`.
+This repository is a small Java tool that generates CSV test data from a metadata descriptor
+(JSON). It loads generation templates from `src/main/resources/descriptor.json` and
+writes a CSV file next to the input metadata named `<input>_output.csv` (or `_output.csv`).
 
-Key classes:
-- `org.pgs.app.TestDataGenerate` — original/older entry point.
-- `org.pgs.app.TestDataGeneratorUI` — the main class referenced in the pom assembly manifest.
-- `org.pgs.app.TestDataGeneratorV3` — newer generator implementation (multi-threaded writer).
+Key entry points (you may see several versions in the repo):
+- `org.pgs.app.TestDataGenerate` — an older CLI entrypoint (simple CSV metadata format).
+- `org.pgs.app.TestDataGeneratorV2` — a previous version (JSON-driven, single-threaded writer).
+- `org.pgs.app.TestDataGeneratorV3` — current, feature-rich generator (multi-threaded writer).
+- `org.pgs.app.TestDataGeneratorUI` — Swing UI wrapper (also the assembly's mainClass).
 
-Why this structure: the project evolved across versions (V2, V3). Each `TestDataGenerator*`
-implements the metadata-driven generation logic; V3 contains the most feature-rich code
-and is where you should start when changing generation rules or concurrency behavior.
+In short: treat V3 as the authoritative implementation for adding features or fixing
+generation logic; the UI and V2/Generate classes are kept for compatibility/examples.
 
 ## Important files and where to look
-- `pom.xml` — Maven build. Java release target is 16; assembly plugin produces a
-  `jar-with-dependencies` with main = `org.pgs.app.TestDataGeneratorUI`.
+- `pom.xml` — Maven build. The maven-compiler-plugin's `<release>` is set in the POM
+  (check `pom.xml` — currently it uses `release` 9 in this branch). The assembly plugin
+  still produces a `jar-with-dependencies` whose manifest main is `org.pgs.app.TestDataGeneratorUI`.
 - `src/main/resources/descriptor.json` — format templates (gender ranges, IP regex, uuid regex, etc.).
 - `src/main/java/org/pgs/app/TestDataGeneratorV3.java` — V3 implementation: metadata parsing,
   per-datatype generation logic, multi-threaded CSV writing (inner class `WriteDataToFile`).
 - `README.md` — sample metadata JSON schema (useful as authoritative example).
 
 ## Build and run (exact commands)
-Prereqs: JDK 16+ and Maven installed. The project uses the maven-assembly-plugin to make a fat jar.
+Prereqs: JDK that matches the POM `<release>` (check `pom.xml` — this branch currently sets `<release>` to 9).
+Maven is required for building the fat JAR.
 
 Build (from repo root):
 ```bash
 mvn -DskipTests package
 ```
 
-Resulting artifact (examples already present in repo):
-- `target/TestDataGeneration-*-jar-with-dependencies.jar` (or similar named jar in repo root)
-
-Run (recommended fat-jar form):
+Artifact: the assembly plugin creates a jar-with-dependencies in `target/`.
+Example run (fat JAR):
 ```bash
 java -jar target/*-jar-with-dependencies.jar <metadata-file.json> <number-of-rows>
 ```
-Example:
-```bash
-java -jar target/TestDataGeneration-v3.0.1-SNAPSHOT-jar-with-dependencies.jar /path/metadata.json 10000
-```
+Notes on class-based runs (useful while developing):
+- Run V3 directly from the classpath (prints help if you pass `--help`):
+  java -cp target/*:target/classes org.pgs.app.TestDataGeneratorV3 <metadata-file.json> <numRows>
+- Run the UI (Swing) from the IDE or via the assembled jar since the assembly manifest
+  sets `org.pgs.app.TestDataGeneratorUI` as the main class.
 
-You can also print help directly:
-```bash
-java -cp target/*-jar-with-dependencies.jar org.pgs.app.TestDataGeneratorV3 --help
-```
-
-Output: a CSV file named `<metadata-filename>_output.csv` written to the same directory
-as the metadata file.
+Output: CSV written beside the metadata file (name depends on the tool variant: `_output.csv` or `_output.<ext>`).
 
 ## Metadata format & conventions (project-specific)
-- The metadata is an array of JSON objects. Each object must include a `name` and `datatype`.
-- Common keys you will see in code and descriptor lookups:
-  - `range` — either a string `min~max` (numbers/dates/timestamps/floats) or a JSON array (text).
-  - `default_value` — if non-empty it is used verbatim.
-  - `duplicates_allowed` — `yes`/`no` — drives whether the generator must avoid duplicates.
-  - `date_format` / `timestamp_format` — used for parsing or formatting dates.
-  - `scale` — decimal places for `float` fields.
-  - `cctype` — credit card type (see `descriptor.json` for allowed types).
+- V3 expects a JSON array of attribute descriptor objects (see `README.md` for examples).
+- Common descriptor fields across the versions:
+  - `name` — attribute name (required)
+  - `datatype` — e.g. `number`, `text`, `float`, `date`, `gender`, `uuid`, `ipaddress`, `timestamp`, etc.
+  - `range` — for numeric/date/timestamp/float types it's typically a `min~max` string; for `text` it may be an array of values.
+  - `default_value` — a verbatim value to use instead of generated values.
+  - `duplicates_allowed` — `yes`/`no` (controls uniqueness behavior for some types).
+  - `date_format` / `timestamp_format` — DateTime patterns used by the generator when parsing/formatting.
+  - `scale` — decimal scale for `float` types.
+  - `cctype` — credit-card type for `creditcard` datatype (see `descriptor.json`).
   - `ipaddress_type` — `ipv4`, `ipv6` or `any`.
 
-See `README.md` for a concrete, copy/paste sample metadata array used by the tests and examples.
+See `README.md` for concrete examples and copy/paste samples used by tests.
 
 ## Coding patterns to follow (and watch for)
-- Generation logic uses `com.github.javafaker.Faker` and `org.json.simple` for JSON parsing.
+- Generation logic uses `com.github.javafaker.Faker`, `json-simple` for JSON parsing and `opencsv` for CSV writes.
 - Concurrency model in `TestDataGeneratorV3`:
-  - A fixed number of `WriteDataToFile` threads (default 10).
-  - Each thread is a `Thread` subclass with fields: `isBusy`, `running`, `started`.
-  - Work is dispatched by setting `setValues(...)` and `isBusy = true`.
-  - CSV write operations are synchronized on the `CSVWriter` instance.
-  - Note: threads use a busy-wait loop (`while(running) { if(isBusy) { ... } }`). If you edit
-    concurrency, consider replacing busy-wait with wait/notify or an ExecutorService.
+  - A fixed number of `WriteDataToFile` worker threads (default 10).
+  - Each worker is a `Thread` subclass with `isBusy`/`running` flags; the main controller sets work via `setValues(...)` and flips `isBusy`.
+  - CSV writes are synchronized on the `CSVWriter` instance.
+  - Important: V3 currently uses a busy-wait loop. If you change concurrency, prefer an ExecutorService or use wait/notify to avoid spin loops.
 
-- Descriptor loading uses `getResourceAsStream(DESCRIPTOR_FILE_PATH)` — keep `descriptor.json`
-  on the classpath (src/main/resources). If tests or dev runs fail to find it, make sure resources
-  are included on the classpath.
+- Descriptor loading uses `TestDataGeneratorV3.class.getClassLoader().getResourceAsStream("descriptor.json")` so keep `descriptor.json` in `src/main/resources`.
 
 ## Dependencies and integration points
-- External libs visible in `pom.xml`:
-  - `opencsv` for CSV writing
-  - `json-simple` for JSON parsing
-  - `javafaker` for fake data
-  - `rgxgen` / regex-based generation used indirectly (descriptor regexes)
-- No network/service integrations — all generation is local and file-based.
+- The project declares these primary libs in `pom.xml`:
+  - `com.opencsv:opencsv` (CSV writes)
+  - `com.googlecode.json-simple:json-simple` (JSON parsing)
+  - `com.github.javafaker:javafaker` (fake values)
+  - `com.github.curious-odd-man:rgxgen` (regex generation for some descriptor formats)
+- No network or external services; all generation is local and file-based.
 
 ## Common pitfalls and pointers
-- The V3 writer increments and mutates shared maps (e.g., `rangeSeq`, `floatSequence`). Those maps
-  are passed around without fine-grained synchronization; the CSV write itself is synchronized but
-  the maps are not. If you add parallel mutations, either make collections concurrent or synchronize.
-- The code uses `String` equality checks like `toString() != ""` — prefer `.isEmpty()` or `.trim().isEmpty()`.
-- Date parsing relies on `DateTimeFormatter` patterns in the metadata; invalid patterns are validated
-  in `validateSchemaMetaData` and will fail fast with a readable message.
+- Shared mutable maps: V3 passes and mutates shared maps such as `rangeSeq` and `floatSequence` across threads.
+  The CSV write is synchronized, but the maps themselves are not — either use concurrent collections
+  (ConcurrentHashMap) or synchronize access if you add parallel mutations.
+- Logging: a lightweight logger `AppLogger` exists in `src/main/java/org/pgs/app/AppLogger.java`.
+  Use `AppLogger.info|warn|error|debug(...)`. Enable debug with `-Dapp.debug=true` and redirect logs
+  to a file with `-Dapp.logFile=/path/to/log`.
+- Note: this branch shows several files that still print directly to stdout/stderr (e.g. `System.out.println` or `e.printStackTrace()` in `TestDataGenerate` and `TestDataGeneratorV2`). Prefer `AppLogger` for consistent, timestamped logs.
+- String equality: avoid `==` or `!=` when comparing Strings; prefer `.isEmpty()` or `.trim().isEmpty()`.
+- Date parsing: `validateSchemaMetaData` validates date/timestamp formats; invalid patterns will be caught early.
+
+## VS Code: launch configurations and tasks
+If you use VS Code the workspace includes helpful debug/run wiring under `.vscode`:
+
+- `.vscode/launch.json` contains class-based launch configs you can run from Run & Debug:
+  - `TestDataGeneratorUI` — launches the Swing UI (pre-launch: `maven-package-skip-tests`).
+  - `Debug TestDataGeneratorV3 (with args)` — launches V3 with example args and `-Dapp.debug` VM arg.
+  - `Debug TestDataGeneratorUI (Swing)` — similar UI launcher with debug VM args.
+  - `Run Assembled Jar (task)` — convenience entry that triggers the `run-assembled-jar` task which builds and runs the fat JAR.
+
+- `.vscode/tasks.json` includes two tasks wired into the launch configs:
+  - `maven-package-skip-tests` — runs `mvn -DskipTests package` (default preLaunch build task).
+  - `run-assembled-jar` — runs `mvn -DskipTests package && java -jar target/*-jar-with-dependencies.jar <sample-args>`.
+
+Notes:
+- The `maven-package-skip-tests` task is used as a `preLaunchTask` so launching from VS Code builds the project first.
+- The `run-assembled-jar` task runs the jar in a shell. VS Code does not automatically attach the debugger to that external `java -jar` process. To debug the jar, start it with remote debug flags and use an "Attach" debug configuration (see below).
+
+Example: run the fat JAR with remote debugging enabled (attach later from VS Code):
+
+```bash
+java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -jar target/*-jar-with-dependencies.jar <metadata.json> <numRows>
+```
+
+Then add/choose an "Attach" config in VS Code to connect to port 5005.
 
 ## Where to look when changing behavior
 - To change CSV formatting or quoting: `TestDataGeneratorV3` — CSVWriter creation and synchronized write.
@@ -104,33 +124,27 @@ ExecutorService for threading), tell me which area to expand and I'll update thi
 
 ## How to debug (quick checks and recommended breakpoints)
 
-- Typical debugging entry points:
-  - `org.pgs.app.TestDataGeneratorV3.main` — validate argument parsing, metadata file path, and timing.
-  - `org.pgs.app.TestDataGeneratorV3.generateTestData` — metadata parsing, validation (`validateSchemaMetaData`), and the write loop that starts threads.
-  - `org.pgs.app.TestDataGeneratorV3.WriteDataToFile.writeDataToFile` — per-row generation logic and the synchronized write to `CSVWriter`.
+Typical debugging entry points:
+- `org.pgs.app.TestDataGeneratorV3.main` — argument parsing, metadata path, timing.
+- `org.pgs.app.TestDataGeneratorV3.generateTestData` — parsing + validation + dispatch loop.
+- `org.pgs.app.TestDataGeneratorV3.WriteDataToFile.writeDataToFile` — per-row generation + synchronized CSV writes.
 
-- Recommended breakpoints:
-  - Just after metadata is parsed (after `parser.parse(new FileReader(...))`) to inspect `metaData` map.
-  - At the start of `validateSchemaMetaData` to step through validation failures for bad metadata.
-  - Inside `WriteDataToFile.run` when `isBusy` is true to inspect the `startRowNum` / `endRowNum` and thread state.
-  - Immediately before and after `synchronized (writer) { writer.writeNext(...) }` to confirm written rows and to check for contention.
+Recommended breakpoints:
+- After metadata is parsed (inspect `metaData`).
+- At `validateSchemaMetaData` to catch schema issues.
+- Inside `WriteDataToFile.run` when `isBusy` is true (inspect row ranges and thread state).
+- Immediately before/after `synchronized (writer) { writer.writeNext(...) }` to check wrote rows.
 
-- Quick runtime checks (CLI / IDE):
-  - Verify `descriptor.json` is on the classpath at runtime: inside your run configuration confirm resources folder is included, or programmatically test `TestDataGeneratorV3.class.getClassLoader().getResourceAsStream("descriptor.json")` returns non-null.
-  - If the program exits with "Invalid arguments" messages, rerun with `--help` to see exact usage displayed by the app.
-  - For file-not-found issues: print `new File(inputFilePath).getAbsolutePath()` and confirm file permissions.
+Quick runtime checks:
+- Verify `descriptor.json` is visible at runtime: `TestDataGeneratorV3.class.getClassLoader().getResourceAsStream("descriptor.json")` should return non-null when launched from IDE or jar.
+- Use `--help` on class launches to check usage messages.
 
-- Logging and fast instrumentation:
-  - The project uses `System.out.println` for status messages. Add temporary logging (SLF4J or java.util.logging) if you need log levels. For quick checks, add `System.out.printf("thread=%s start=%d end=%d\n", Thread.currentThread().getName(), startRowNum, endRowNum);` inside `WriteDataToFile`.
-  - When diagnosing duplicates or sequence counts, dump shared maps (`rangeSequence`, `floatSequence`, `rangeSeq`) at key points. Because multiple threads mutate these maps, either snapshot them inside a synchronized block or use concurrent collections while debugging.
+Logging & instrumentation:
+- Prefer `AppLogger` for consistent logs. Enable debug messages with `-Dapp.debug=true` and redirect to a file with `-Dapp.logFile=/path/to/log`.
+- If you still see `System.out.println` or `e.printStackTrace()` in some files (V2/V1), consider replacing them with `AppLogger` to keep behavior consistent across runs.
 
-- Concurrency pitfalls to watch for while debugging:
-  - Threads use busy-wait loops; if threads appear stuck, check `isBusy` flags and that the main loop is setting them. Also check the final waiter loop that checks `counter` for thread completion.
-  - Race conditions often show as missing or duplicated rows — focus on how `numGenerators`, `rangeSeq` and `floatSequence` are mutated.
+Concurrency tips:
+- V3 uses busy-wait worker threads; if you see high CPU or stuck threads, reduce `numOfThreads` or refactor to an ExecutorService.
+- Race conditions will often show up as duplicated/missing rows — focus on access to `numGenerators`, `rangeSequence`, and `floatSequence`.
 
-- Repro tips for debugging locally:
-  - Reduce `numOfThreads` (in `generateTestData`) to 1 or 2 while stepping through thread logic to reduce noise.
-  - Use small `numOfRows` (e.g., 1–100) for fast iteration.
-  - Add a temporary `Thread.sleep(50)` inside `WriteDataToFile` after writing rows to make it easier to observe thread handoff in a debugger.
-
-If you want, I can add a small logging wrapper and a `-Ddebug` flag to enable verbose output without editing source each time.
+If you'd like, I can add a pre-launch task for building (`mvn -DskipTests package`) and a `.vscode/tasks.json` entry to wire into the existing `.vscode/launch.json` configs.

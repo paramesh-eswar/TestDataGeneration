@@ -1,0 +1,34 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "maven-package-skip-tests",
+      "type": "shell",
+      "command": "mvn -DskipTests package",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    }
+    ,
+    {
+      "label": "run-assembled-jar",
+      "type": "shell",
+      "command": "mvn -DskipTests package && java -jar target/*-jar-with-dependencies.jar ${workspaceFolder}/src/main/resources/test_data.json 100",
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    }
+  ]
+}
