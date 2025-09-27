@@ -24,4 +24,4 @@ jobs:
 
     - name: Build and run tests
       run: |
-        mvn -B -V test
+        mvn -B -V test -Dapp.test.singlethread=true -Djava.awt.headless=true
