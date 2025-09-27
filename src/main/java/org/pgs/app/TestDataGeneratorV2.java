@@ -174,7 +174,7 @@ public class TestDataGeneratorV2 {
 	    			}
 	    		}
 			}
-	    } catch (FileNotFoundException e) {
+		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (ParseException e) {
 			e.printStackTrace();
@@ -182,8 +182,8 @@ public class TestDataGeneratorV2 {
 			return false;
 		} catch(Exception e) {
 	    	e.printStackTrace();
-	    }
-	    headerRow.deleteCharAt(headerRow.lastIndexOf(","));
+		}
+		headerRow.deleteCharAt(headerRow.lastIndexOf(","));
 		System.out.println("Test data generation is in progress ...");
 		
 		//validate the input metadata
@@ -522,8 +522,8 @@ public class TestDataGeneratorV2 {
 		} catch (Exception e) {
         	e.printStackTrace();
         	System.out.println("Un expected error occured while writing the data to file!!");
-        }
-		
+		}
+        
 		System.out.println("Test data generation completed successfully!!\nOutput file location: " + outputFilePath);
 		return true;
 	}

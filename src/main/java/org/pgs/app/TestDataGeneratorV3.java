@@ -39,24 +39,24 @@ public class TestDataGeneratorV3 {
 	public static void main(String[] args) throws Exception{
 		//validating the program arguments passed
 		if(args.length == 0 || args.length != 2) {
-			System.out.println("Invalid arguments count!!");
+			AppLogger.warn("Invalid arguments count!!");
 			System.exit(0);
 		}
 		
 		if(args.length == 1 && !args[0].equalsIgnoreCase("--help")) {
-			System.out.println("Invalid argument!!");
-			System.out.println("Usage format for help: java TestDataGenerate --help");
+			AppLogger.warn("Invalid argument!!");
+			AppLogger.info("Usage format for help: java TestDataGenerate --help");
 			System.exit(0);
 		}
 		
 		if(args.length == 1 && args[0].equalsIgnoreCase("--help" )) {
-			System.out.println("Usage Format");
-			System.out.println("===============================================================================================");
-			System.out.println("java TestDataGenerate <complete-file-path> <number-rows-needed>");
-			System.out.println("-----------------------------------------------------------------------------------------------");
-			System.out.println("complete-file-path should be full path of the metadata file");
-			System.out.println("number-rows-needed should always be a positive integer (no decimals or negative values allowed)");
-			System.out.println("===============================================================================================");
+			AppLogger.info("Usage Format");
+			AppLogger.info("===============================================================================================");
+			AppLogger.info("java TestDataGenerate <complete-file-path> <number-rows-needed>");
+			AppLogger.info("-----------------------------------------------------------------------------------------------");
+			AppLogger.info("complete-file-path should be full path of the metadata file");
+			AppLogger.info("number-rows-needed should always be a positive integer (no decimals or negative values allowed)");
+			AppLogger.info("===============================================================================================");
 			System.exit(0);
 		}
 		
@@ -71,8 +71,8 @@ public class TestDataGeneratorV3 {
 		boolean isDataGenerated = tdg.generateTestData(inputFilePath, numOfRows);
 		long endTime = System.currentTimeMillis();
 		if(!isDataGenerated)
-			System.out.println("Test data genearation failed with errors!!");
-		System.out.println("Time taken to generate test data: " + ((endTime-startTime)/1000) + " sec");
+			AppLogger.error("Test data genearation failed with errors!!");
+		AppLogger.info("Time taken to generate test data: " + ((endTime-startTime)/1000) + " sec");
 	}
 	
 	//Sequence number generator
@@ -145,7 +145,7 @@ public class TestDataGeneratorV3 {
 			outputFilePath = filePath + File.separator + fileName.substring(0, fileName.lastIndexOf(".")) + "_output.csv";
 			
 		} catch (Exception e) {
-			e.printStackTrace();
+			AppLogger.error(e.toString());
 		}
 		
 		Map<String, JSONObject> metaData = new LinkedHashMap<String, JSONObject>();
@@ -174,25 +174,25 @@ public class TestDataGeneratorV3 {
 	    		}
 			}
 	    } catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (ParseException e) {
-			e.printStackTrace();
-			System.out.println("Metadata not in expected format. Please change it and re-run to generate test data");
-			errorMessage.append("Metadata not in expected format. Please change it and re-run to generate test data\n");
-			return false;
-		} catch(Exception e) {
-	    	e.printStackTrace();
+		    AppLogger.error(e.toString());
+	    } catch (ParseException e) {
+		    AppLogger.error(e.toString());
+		    AppLogger.error("Metadata not in expected format. Please change it and re-run to generate test data");
+		    errorMessage.append("Metadata not in expected format. Please change it and re-run to generate test data\n");
+		    return false;
+	    } catch(Exception e) {
+		    AppLogger.error(e.toString());
 	    }
 	    headerRow.deleteCharAt(headerRow.lastIndexOf(","));
-		System.out.println("Test data generation is in progress ...");
+	AppLogger.info("Test data generation is in progress ...");
 		
 		//validate the input metadata
 		String errors = validateSchemaMetaData(descriptorJson, metaData, numOfRows);
 		if(errors != null && errors.length() > 0) {
-			System.out.println("Metadata not in expected format. Please change below and re-run to generate test data.");
-			System.out.println("============================");
-			System.out.println(errors);
-			System.out.println("============================");
+			AppLogger.error("Metadata not in expected format. Please change below and re-run to generate test data.");
+			AppLogger.error("============================");
+			AppLogger.error(errors);
+			AppLogger.error("============================");
 			errorMessage.append("Metadata not in expected format. Please change below and re-run to generate test data.\n");
 			errorMessage.append("============================\n");
 			errorMessage.append(errors);
@@ -260,15 +260,15 @@ public class TestDataGeneratorV3 {
 				if(counter == 0)
 					break;
 			}
-			System.out.println("Wait is over");
+			AppLogger.debug("Wait is over");
 			errorMessage.append("Wait is over\n");
 		} catch (Exception e) {
-        	e.printStackTrace();
-        	System.out.println("Un expected error occured while writing the data to file!!");
-        	errorMessage.append("Un expected error occured while writing the data to file!!\n");
+	        	AppLogger.error(e.toString());
+			AppLogger.error("Un expected error occured while writing the data to file!!");
+			errorMessage.append("Un expected error occured while writing the data to file!!\n");
         }
-		
-		System.out.println("Test data generation completed successfully!!\nOutput file location: " + outputFilePath);
+        
+		AppLogger.info("Test data generation completed successfully!!\nOutput file location: " + outputFilePath);
 		errorMessage.append("Test data generation completed successfully!!\nOutput file location: " + outputFilePath);
 		return true;
 	}
@@ -301,12 +301,12 @@ public class TestDataGeneratorV3 {
 	    	Object obj = parser.parse(streamReader);
 	    	jsonObject = (JSONObject)obj;
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			AppLogger.error(e.toString());
 		} catch (ParseException e) {
-			e.printStackTrace();
-			System.out.println("Error occured while loading the descriptor file");
+			AppLogger.error(e.toString());
+			AppLogger.error("Error occured while loading the descriptor file");
 		} catch (Exception e) {
-			e.printStackTrace();
+			AppLogger.error(e.toString());
 		}
 		return jsonObject;
 	}
