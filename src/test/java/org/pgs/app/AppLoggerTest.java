@@ -96,6 +96,7 @@ public class AppLoggerTest {
     @Test
     public void writesToProvidedLogFile(@TempDir Path tmp) throws Exception {
         Path log = tmp.resolve("app.log");
+        Files.createFile(log);
         System.setProperty("app.logFile", log.toString());
 
         // Force AppLogger class initialization after setting the system property
