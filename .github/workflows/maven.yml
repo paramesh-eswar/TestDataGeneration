@@ -21,18 +21,7 @@ jobs:
         distribution: temurin
         java-version: ${{ matrix.java }}
         cache: maven
-
-    - name: Install Xvfb (for GUI tests)
-      if: runner.os == 'Linux'
-      run: sudo apt-get update && sudo apt-get install -y xvfb
       
     - name: Build and run tests
       run: |
-        # Use xvfb-run to provide a virtual display for Swing/AWT tests if available.
-        # If xvfb-run is not installed (non-Linux runners), fall back to running tests
-        # in headless mode to avoid GUI failures.
-        if command -v xvfb-run >/dev/null 2>&1; then
-          xvfb-run -a mvn -B -V test
-        else
-          mvn -B -V test -Djava.awt.headless=true
-        fi
+        mvn -B -V test
