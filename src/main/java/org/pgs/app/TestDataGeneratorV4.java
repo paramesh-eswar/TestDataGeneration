@@ -15,9 +15,16 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.json.simple.JSONArray;
@@ -29,7 +36,7 @@ import com.github.javafaker.CreditCardType;
 import com.github.javafaker.Faker;
 import com.opencsv.CSVWriter;
 
-public class TestDataGeneratorV3 {
+public class TestDataGeneratorV4 {
 	private static String inputFilePath = "";
 	private static Long numOfRows = 0l;
 	private static String DESCRIPTOR_FILE_PATH = "descriptor.json";
@@ -154,7 +161,7 @@ public class TestDataGeneratorV3 {
 	    try {
 	    	Object obj = parser.parse(new FileReader(new File(inputFilePath)));
 	    	JSONArray jsonArray = (JSONArray)obj;
-			@SuppressWarnings("unchecked")
+	    	@SuppressWarnings("unchecked")
 	    	Iterator<Object> iterator = jsonArray.iterator();
 	    	while (iterator.hasNext()) {
 	    		JSONObject jsonObject = (JSONObject) iterator.next();
@@ -218,70 +225,70 @@ public class TestDataGeneratorV3 {
 //		StringBuffer dataRow = new StringBuffer();
 //		Random random = new Random();
 		Long rowCount = 1L, endCount = 0L;
-		int numOfThreads = 10, counter = 10;
-		WriteDataToFile[] threads = new WriteDataToFile[numOfThreads];
+		int numOfThreads = 10;
 //		Faker fakeDataGenerator = new Faker();
 //		CSVWriter writer = null;
 		try(CSVWriter writer = new CSVWriter(new FileWriter(outputFilePath), ',', CSVWriter.NO_QUOTE_CHARACTER, CSVWriter.NO_ESCAPE_CHARACTER, CSVWriter.DEFAULT_LINE_END))  {
 //			writer = new CSVWriter(new FileWriter(outputFilePath), ',', CSVWriter.NO_QUOTE_CHARACTER, CSVWriter.NO_ESCAPE_CHARACTER, CSVWriter.DEFAULT_LINE_END);
 			writer.writeNext(headerRow.toString().split(","));
-			Map<String, Integer> rangeSequence = new LinkedHashMap<String, Integer>();
-			Map<String, Double> floatSequence = new LinkedHashMap<String, Double>();
-			Map<String, ArrayList<String>> rangeSeq = new LinkedHashMap<String, ArrayList<String>>();
-			for(int t=0;t<numOfThreads; t++) {
-				threads[t] = new WriteDataToFile(writer);
-				threads[t].start();
-			}
-			while(rowCount<=numOfRows) {
-				for(int i=0;i<numOfThreads; i++) {
-					if(!threads[i].isBusy) {
-						if(rowCount <= numOfRows-100)
-							endCount = rowCount + 100;
-						else
-							endCount = numOfRows + 1;
-						threads[i].setValues(rowCount, endCount, metaData, descriptorJson, numGenerators, dateGenerators, rangeSequence, floatSequence, rangeSeq);
-						threads[i].isBusy = true;
-						rowCount = endCount;
-						if(rowCount >= numOfRows)
-							break;
+			Map<String, Integer> rangeSequence = new ConcurrentHashMap<String, Integer>();
+			Map<String, Double> floatSequence = new ConcurrentHashMap<String, Double>();
+			Map<String, CopyOnWriteArrayList<String>> rangeSeq = new ConcurrentHashMap<String, CopyOnWriteArrayList<String>>();
+
+			ExecutorService executor = Executors.newFixedThreadPool(numOfThreads);
+			List<Future<?>> futures = new ArrayList<>();
+			try {
+				while(rowCount<=numOfRows) {
+					if(rowCount <= numOfRows-100)
+						endCount = rowCount + 100;
+					else
+						endCount = numOfRows + 1;
+					futures.add(executor.submit(new DataWriterTask(rowCount, endCount, metaData, descriptorJson, numGenerators, dateGenerators, rangeSequence, floatSequence, rangeSeq, writer)));
+					rowCount = endCount;
+				}
+			} finally {
+				executor.shutdown();
+				// Poll in a loop
+				/* try {
+					// executor.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
+					if(!executor.awaitTermination(1, TimeUnit.HOURS)) {
+						executor.shutdownNow();
+					}
+				} catch (InterruptedException ie) {
+					executor.shutdownNow();
+					Thread.currentThread().interrupt();
+				} */
+				// Using futures
+				/* for (Future<?> future : futures) {
+					try {
+						future.get();
+					} catch (InterruptedException | ExecutionException e) {
+						AppLogger.error(e.toString());
+						executor.shutdownNow();
+						Thread.currentThread().interrupt();
+					}
+				} */
+				while (!executor.isTerminated()) {
+					try {
+						executor.awaitTermination(1, TimeUnit.MINUTES);
+					} catch (InterruptedException ie) {
+						AppLogger.error(ie.toString());
+						executor.shutdownNow();
+						Thread.currentThread().interrupt();
 					}
 				}
-			}
-//			Thread.sleep(5000);
-			while(true) {
-				for(int t=0;t<numOfThreads; t++) {
-					if(!threads[t].isBusy && threads[t].isRunning()) {
-						threads[t].setRunning(false);
-						counter--;
-					}
-				}
-				if(counter == 0)
-					break;
 			}
 			AppLogger.debug("Wait is over");
 			errorMessage.append("Wait is over\n");
 		} catch (Exception e) {
-	        	AppLogger.error(e.toString());
+			AppLogger.error(e.toString());
 			AppLogger.error("Un expected error occured while writing the data to file!!");
 			errorMessage.append("Un expected error occured while writing the data to file!!\n");
-        }
+		}
         
 		AppLogger.info("Test data generation completed successfully!!\nOutput file location: " + outputFilePath);
 		errorMessage.append("Test data generation completed successfully!!\nOutput file location: " + outputFilePath);
 		return true;
-	}
-
-	private static String getCreditCardNumber(Faker fakeDataGenerator, Map.Entry<String, JSONObject> entry) {
-		CreditCardType ccType = null;
-		String ccnumber = "";
-		if(!Util.isBlank(entry.getValue().get("cctype")) && 
-				!("any").equalsIgnoreCase(entry.getValue().get("cctype").toString().trim()))
-			ccType = CreditCardType.valueOf(entry.getValue().get("cctype").toString().toUpperCase());
-		if(ccType != null)
-			ccnumber = fakeDataGenerator.finance().creditCard(ccType);
-		else
-			ccnumber = fakeDataGenerator.finance().creditCard();
-		return ccnumber;
 	}
 	
 	private static String getRandomTimeStamp(String timestampFormat, String startDate, String endDate) {
@@ -554,40 +561,20 @@ public class TestDataGeneratorV3 {
 		return errorMessages.toString();
 	}
 
-	//Inner class for threads
-	public class WriteDataToFile extends Thread{
-		private boolean started;
-		private boolean running;
-		private boolean isBusy=false;
-		
+
+	// Worker task for writing data (used with ExecutorService)
+	public class DataWriterTask implements Runnable{
 		Map<String, JSONObject> metaData;
 		JSONObject descriptorJson;
 		Map<String, AtomicLong> numGenerators;
 		Map<String, DateGenerator> dateGenerators;
 		Map<String, Integer> rangeSequence;
 		Map<String, Double> floatSequence;
-		Map<String, ArrayList<String>> rangeSeq;
+		Map<String, CopyOnWriteArrayList<String>> rangeSeq;
 		Long startRowNum, endRowNum;
 		CSVWriter writer;
-		
-		public WriteDataToFile(CSVWriter writer) {
-			this.writer = writer;
-		}
-		
-		public boolean isStarted() {
-		    return started;
-		}
 
-		public boolean isRunning() {
-		    return running;
-		}
-		
-		public boolean isCompleted() {
-			return startRowNum == endRowNum;
-		}
-		
-		public void setValues(Long startRowNum, Long endRowNum, Map<String, JSONObject> metaData, JSONObject descriptorJson, Map<String, AtomicLong> numGenerators, Map<String, DateGenerator> dateGenerators, Map<String, Integer> rangeSequence, Map<String, Double> floatSequence, Map<String, ArrayList<String>> rangeSeq)
-		{
+		public DataWriterTask(Long startRowNum, Long endRowNum, Map<String, JSONObject> metaData, JSONObject descriptorJson, Map<String, AtomicLong> numGenerators, Map<String, DateGenerator> dateGenerators, Map<String, Integer> rangeSequence, Map<String, Double> floatSequence, Map<String, CopyOnWriteArrayList<String>> rangeSeq, CSVWriter writer) {
 			this.startRowNum = startRowNum;
 			this.endRowNum = endRowNum;
 			this.metaData = metaData;
@@ -597,26 +584,15 @@ public class TestDataGeneratorV3 {
 			this.rangeSequence = rangeSequence;
 			this.floatSequence = floatSequence;
 			this.rangeSeq = rangeSeq;
+			this.writer = writer;
 		}
 
-		public void setRunning(boolean running) {
-		    this.running = running;
-		    if (running)
-		        started  = true;
+		@Override
+		public void run() {
+			writeDataToFile(this.startRowNum, this.endRowNum, this.metaData, this.descriptorJson, this.numGenerators, this.dateGenerators, this.rangeSequence, this.floatSequence, this.rangeSeq);
 		}
-		
-		public void run()
-		{
-			setRunning(true);
-			while(running)
-			{
-				if(isBusy) {
-					writeDataToFile(this.startRowNum, this.endRowNum, this.metaData, this.descriptorJson, this.numGenerators, this.dateGenerators, this.rangeSequence, this.floatSequence, this.rangeSeq);
-				}
-			}
-		}
-		
-		private void writeDataToFile(Long rowCount, Long endCount, Map<String, JSONObject> metaData, JSONObject descriptorJson, Map<String, AtomicLong> numGenerators, Map<String, DateGenerator> dateGenerators, Map<String, Integer> rangeSequence, Map<String, Double> floatSequence, Map<String, ArrayList<String>> rangeSeq) {
+
+		private void writeDataToFile(Long rowCount, Long endCount, Map<String, JSONObject> metaData, JSONObject descriptorJson, Map<String, AtomicLong> numGenerators, Map<String, DateGenerator> dateGenerators, Map<String, Integer> rangeSequence, Map<String, Double> floatSequence, Map<String, CopyOnWriteArrayList<String>> rangeSeq) {
 			StringBuffer dataRow = new StringBuffer();
 			Faker fakeDataGenerator = new Faker();
 			Random random = new Random();
@@ -728,7 +704,7 @@ public class TestDataGeneratorV3 {
 						if(!defaultVal.trim().isEmpty())
 							dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
 						else if(!dupAllowed.trim().isEmpty() && ("no").equalsIgnoreCase(dupAllowed.trim())) {
-							ArrayList<String> ssnNumberList;
+					    CopyOnWriteArrayList<String> ssnNumberList;
 							String ssnNumber = new String();
 							if(rangeSeq.containsKey(entry.getValue().get("name").toString())) {
 								ssnNumberList = rangeSeq.get(entry.getValue().get("name").toString());
@@ -736,7 +712,7 @@ public class TestDataGeneratorV3 {
 								while(ssnNumberList.contains(ssnNumber))
 									ssnNumber = fakeDataGenerator.idNumber().ssnValid();
 							} else {
-								ssnNumberList = new ArrayList<String>();
+								ssnNumberList = new CopyOnWriteArrayList<String>();
 								ssnNumber = fakeDataGenerator.idNumber().ssnValid();
 							}
 							ssnNumberList.add(ssnNumber);
@@ -753,7 +729,7 @@ public class TestDataGeneratorV3 {
 						if(!defaultVal.trim().isEmpty())
 							dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
 						else if(!dupAllowed.trim().isEmpty() && ("no").equalsIgnoreCase(dupAllowed.trim())) {
-							ArrayList<String> creditcardNumberList;
+							CopyOnWriteArrayList<String> creditcardNumberList;
 							String ccnumber = "";
 							if(rangeSeq.containsKey(entry.getValue().get("name").toString())) {
 								creditcardNumberList = rangeSeq.get(entry.getValue().get("name").toString());
@@ -761,7 +737,7 @@ public class TestDataGeneratorV3 {
 								while(creditcardNumberList.contains(ccnumber))
 									ccnumber = getCreditCardNumber(fakeDataGenerator, entry);
 							} else {
-								creditcardNumberList = new ArrayList<String>();
+								creditcardNumberList = new CopyOnWriteArrayList<String>();
 								ccnumber = getCreditCardNumber(fakeDataGenerator, entry);
 							}
 							creditcardNumberList.add(ccnumber);
@@ -779,7 +755,7 @@ public class TestDataGeneratorV3 {
 						if(!defaultVal.trim().isEmpty())
 							dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
 						else if(!dupAllowed.trim().isEmpty() && ("no").equalsIgnoreCase(dupAllowed.trim())) {
-							ArrayList<String> emailsList;
+							CopyOnWriteArrayList<String> emailsList;
 							String email = "";
 							if(rangeSeq.containsKey(entry.getValue().get("name").toString())) {
 								emailsList = rangeSeq.get(entry.getValue().get("name").toString());
@@ -787,7 +763,7 @@ public class TestDataGeneratorV3 {
 								while(emailsList.contains(email))
 									email = fakeDataGenerator.internet().emailAddress();
 							} else {
-								emailsList = new ArrayList<String>();
+								emailsList = new CopyOnWriteArrayList<String>();
 								email = fakeDataGenerator.internet().emailAddress();
 							}
 							emailsList.add(email);
@@ -804,7 +780,7 @@ public class TestDataGeneratorV3 {
 						if(!defaultVal.trim().isEmpty())
 							dataRow = dataRow.append(entry.getValue().get("default_value").toString() + ",");
 						else if(!dupAllowed.trim().isEmpty() && ("no").equalsIgnoreCase(dupAllowed.trim())) {
-							ArrayList<String> phoneNumbersList;
+							CopyOnWriteArrayList<String> phoneNumbersList;
 							String phoneNumber = "";
 							if(rangeSeq.containsKey(entry.getValue().get("name").toString())) {
 								phoneNumbersList = rangeSeq.get(entry.getValue().get("name").toString());
@@ -812,7 +788,7 @@ public class TestDataGeneratorV3 {
 								while(phoneNumbersList.contains(phoneNumber))
 									phoneNumber = fakeDataGenerator.phoneNumber().cellPhone();
 							} else {
-								phoneNumbersList = new ArrayList<String>();
+								phoneNumbersList = new CopyOnWriteArrayList<String>();
 								phoneNumber = fakeDataGenerator.phoneNumber().cellPhone();
 							}
 							phoneNumbersList.add(phoneNumber);
@@ -883,7 +859,7 @@ public class TestDataGeneratorV3 {
 						if(!defaultVal.trim().isEmpty())
 							dataRow = dataRow.append(defaultVal + ",");
 						else if(!dupAllowed.trim().isEmpty() && ("no").equalsIgnoreCase(dupAllowed.trim())) {
-							ArrayList<String> aadharNumberList;
+							CopyOnWriteArrayList<String> aadharNumberList;
 							String aadharNumber = new String();
 							if(rangeSeq.containsKey(entry.getValue().get("name").toString())) {
 								aadharNumberList = rangeSeq.get(entry.getValue().get("name").toString());
@@ -891,7 +867,7 @@ public class TestDataGeneratorV3 {
 								while(aadharNumberList.contains(aadharNumber))
 									aadharNumber = fakeDataGenerator.regexify(aadharRegex);
 							} else {
-								aadharNumberList = new ArrayList<String>();
+								aadharNumberList = new CopyOnWriteArrayList<String>();
 								aadharNumber = fakeDataGenerator.regexify(aadharRegex);
 							}
 							aadharNumberList.add(aadharNumber);
@@ -917,7 +893,20 @@ public class TestDataGeneratorV3 {
 				 * rowCount++;
 				 */
 			}
-			this.isBusy = false;
+			// task completed
 		}
+	}
+
+	private static String getCreditCardNumber(Faker fakeDataGenerator, Map.Entry<String, JSONObject> entry) {
+		CreditCardType ccType = null;
+		String ccnumber = "";
+		if(!Util.isBlank(entry.getValue().get("cctype")) && 
+				!("any").equalsIgnoreCase(entry.getValue().get("cctype").toString().trim()))
+			ccType = CreditCardType.valueOf(entry.getValue().get("cctype").toString().toUpperCase());
+		if(ccType != null)
+			ccnumber = fakeDataGenerator.finance().creditCard(ccType);
+		else
+			ccnumber = fakeDataGenerator.finance().creditCard();
+		return ccnumber;
 	}
 }
