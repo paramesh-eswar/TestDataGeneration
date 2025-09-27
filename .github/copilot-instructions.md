@@ -86,6 +86,10 @@ See `README.md` for concrete examples and copy/paste samples used by tests.
   to a file with `-Dapp.logFile=/path/to/log`.
 - Note: this branch shows several files that still print directly to stdout/stderr (e.g. `System.out.println` or `e.printStackTrace()` in `TestDataGenerate` and `TestDataGeneratorV2`). Prefer `AppLogger` for consistent, timestamped logs.
 - String equality: avoid `==` or `!=` when comparing Strings; prefer `.isEmpty()` or `.trim().isEmpty()`.
+  - Prefer the repository helper `Util.isBlank(Object)` for null-safe, trimmed emptiness checks. Example usage:
+    - `if (Util.isBlank(obj.get("default_value"))) { /* treat as empty */ }`
+    - `if (!Util.isBlank(entry.getValue().get("range"))) { /* range present */ }`
+  - `Util.isBlank` is null-safe and calls `toString().trim().isEmpty()` under the hood, so prefer it when checking JSON values that may be null or non-String objects.
 - Date parsing: `validateSchemaMetaData` validates date/timestamp formats; invalid patterns will be caught early.
 
 ## VS Code: launch configurations and tasks
@@ -146,5 +150,3 @@ Logging & instrumentation:
 Concurrency tips:
 - V3 uses busy-wait worker threads; if you see high CPU or stuck threads, reduce `numOfThreads` or refactor to an ExecutorService.
 - Race conditions will often show up as duplicated/missing rows — focus on access to `numGenerators`, `rangeSequence`, and `floatSequence`.
-
-If you'd like, I can add a pre-launch task for building (`mvn -DskipTests package`) and a `.vscode/tasks.json` entry to wire into the existing `.vscode/launch.json` configs.
