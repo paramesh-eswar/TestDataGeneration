@@ -145,7 +145,24 @@ Quick runtime checks:
 
 Logging & instrumentation:
 - Prefer `AppLogger` for consistent logs. Enable debug messages with `-Dapp.debug=true` and redirect to a file with `-Dapp.logFile=/path/to/log`.
+- Default log file: if `-Dapp.logFile` is not provided, `AppLogger` will write to the default path `$HOME/.testdatagenerator/logs/app.log` (created automatically).
+- Examples:
+  - Explicit file: `java -Dapp.logFile=/absolute/path/to/testdata.log -jar target/*-jar-with-dependencies.jar <metadata.json> <numRows>`
+  - Project-local file: `java -Dapp.logFile="$PWD/logs/testdata.log" -jar target/*-jar-with-dependencies.jar metadata.json 1000`
 - If you still see `System.out.println` or `e.printStackTrace()` in some files (V2/V1), consider replacing them with `AppLogger` to keep behavior consistent across runs.
+  
+- Log rotation: AppLogger supports simple rotation controlled by system properties. Defaults are safe for local development.
+  - `-Dapp.logRotatePolicy` — `daily` (default) or `size`.
+  - `-Dapp.logMaxBytes` — maximum bytes before size-based rotation (default: 10485760 = 10MB).
+  - `-Dapp.logBackupCount` — number of backups/rotations to keep (default: 5).
+  - Behavior:
+    - daily: previous day's file is moved to `app.log.YYYY-MM-DD` (numeric suffixes appended if needed up to backup count).
+    - size: basic numeric rotation `app.log` -> `app.log.1`, `app.log.1` -> `app.log.2`, etc.
+  - Examples:
+    - Default daily rotation (no flags needed):
+      `java -jar target/*-jar-with-dependencies.jar metadata.json 1000`
+    - Force size rotation with 5MB limit and 3 backups:
+      `java -Dapp.logRotatePolicy=size -Dapp.logMaxBytes=5000000 -Dapp.logBackupCount=3 -Dapp.logFile="$PWD/logs/testdata.log" -jar target/*-jar-with-dependencies.jar metadata.json 1000`
 
 Concurrency tips:
 - V3 uses busy-wait worker threads; if you see high CPU or stuck threads, reduce `numOfThreads` or refactor to an ExecutorService.
