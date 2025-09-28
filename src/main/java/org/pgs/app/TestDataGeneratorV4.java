@@ -74,7 +74,7 @@ public class TestDataGeneratorV4 {
 		
 		//invoking test data generation method
 		long startTime = System.currentTimeMillis();
-		TestDataGeneratorV3 tdg = new TestDataGeneratorV3();
+		TestDataGeneratorV4 tdg = new TestDataGeneratorV4();
 		boolean isDataGenerated = tdg.generateTestData(inputFilePath, numOfRows);
 		long endTime = System.currentTimeMillis();
 		if(!isDataGenerated)
@@ -301,7 +301,7 @@ public class TestDataGeneratorV4 {
 	
 	private static JSONObject loadDescriptor(JSONParser parser) {
 		JSONObject jsonObject = null;
-		try (InputStreamReader streamReader = new InputStreamReader(TestDataGeneratorV3.class.getClassLoader().getResourceAsStream(DESCRIPTOR_FILE_PATH))){
+		try (InputStreamReader streamReader = new InputStreamReader(TestDataGeneratorV4.class.getClassLoader().getResourceAsStream(DESCRIPTOR_FILE_PATH))){
 	    	Object obj = parser.parse(streamReader);
 	    	jsonObject = (JSONObject)obj;
 		} catch (FileNotFoundException e) {
