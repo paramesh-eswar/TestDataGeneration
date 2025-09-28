@@ -11,13 +11,13 @@
     },
     {
       "type": "java",
-      "name": "Debug TestDataGeneratorV3 (with args)",
+      "name": "Debug TestDataGeneratorV4 (with args)",
       "request": "launch",
-      "mainClass": "org.pgs.app.TestDataGeneratorV3",
+      "mainClass": "org.pgs.app.TestDataGeneratorV4",
       "projectName": "TestDataGeneration",
       "cwd": "${workspaceFolder}",
       "args": "${workspaceFolder}/src/main/resources/test_data.json 100",
-      "vmArgs": "-Dapp.debug=true -Dapp.logFile=${workspaceFolder}/logs/testdatageneratorv3.log"
+      "vmArgs": "-Dapp.debug=true -Dapp.logFile=${workspaceFolder}/logs/testdatageneratorv4.log"
       , "preLaunchTask": "maven-package-skip-tests"
     },
     {
@@ -36,7 +36,7 @@
       "type": "java",
       "name": "Run Assembled Jar (task)",
       "request": "launch",
-      "mainClass": "org.pgs.app.TestDataGeneratorV3",
+      "mainClass": "org.pgs.app.TestDataGeneratorV4",
       "projectName": "TestDataGeneration",
       "cwd": "${workspaceFolder}",
       "args": "",

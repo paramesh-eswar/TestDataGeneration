@@ -7,7 +7,8 @@ writes a CSV file next to the input metadata named `<input>_output.csv` (or `_ou
 Key entry points (you may see several versions in the repo):
 - `org.pgs.app.TestDataGenerate` — an older CLI entrypoint (simple CSV metadata format).
 - `org.pgs.app.TestDataGeneratorV2` — a previous version (JSON-driven, single-threaded writer).
-- `org.pgs.app.TestDataGeneratorV3` — current, feature-rich generator (multi-threaded writer).
+- `org.pgs.app.TestDataGeneratorV3` — a previous, feature-rich generator (multi-threaded writer).
+- `org.pgs.app.TestDataGeneratorV4` - current, feature-rich generator (ExecutorService-based writer).
 - `org.pgs.app.TestDataGeneratorUI` — Swing UI wrapper (also the assembly's mainClass).
 
 In short: treat V3 as the authoritative implementation for adding features or fixing
@@ -18,8 +19,8 @@ generation logic; the UI and V2/Generate classes are kept for compatibility/exam
   (check `pom.xml` — currently it uses `release` 9 in this branch). The assembly plugin
   still produces a `jar-with-dependencies` whose manifest main is `org.pgs.app.TestDataGeneratorUI`.
 - `src/main/resources/descriptor.json` — format templates (gender ranges, IP regex, uuid regex, etc.).
-- `src/main/java/org/pgs/app/TestDataGeneratorV3.java` — V3 implementation: metadata parsing,
-  per-datatype generation logic, multi-threaded CSV writing (inner class `WriteDataToFile`).
+- `src/main/java/org/pgs/app/TestDataGeneratorV4.java` — V4 implementation: metadata parsing,
+  per-datatype generation logic, multi-threaded (ExecutorService-based) CSV writing (inner class `WriteDataToFile`).
 - `README.md` — sample metadata JSON schema (useful as authoritative example).
 
 ## Build and run (exact commands)
@@ -38,7 +39,7 @@ java -jar target/*-jar-with-dependencies.jar <metadata-file.json> <number-of-row
 ```
 Notes on class-based runs (useful while developing):
 - Run V3 directly from the classpath (prints help if you pass `--help`):
-  java -cp target/*:target/classes org.pgs.app.TestDataGeneratorV3 <metadata-file.json> <numRows>
+  java -cp target/*:target/classes org.pgs.app.TestDataGeneratorV4 <metadata-file.json> <numRows>
 - Run the UI (Swing) from the IDE or via the assembled jar since the assembly manifest
   sets `org.pgs.app.TestDataGeneratorUI` as the main class.
 
@@ -97,7 +98,7 @@ If you use VS Code the workspace includes helpful debug/run wiring under `.vscod
 
 - `.vscode/launch.json` contains class-based launch configs you can run from Run & Debug:
   - `TestDataGeneratorUI` — launches the Swing UI (pre-launch: `maven-package-skip-tests`).
-  - `Debug TestDataGeneratorV3 (with args)` — launches V3 with example args and `-Dapp.debug` VM arg.
+  - `Debug TestDataGeneratorV4 (with args)` — launches V3 with example args and `-Dapp.debug` VM arg.
   - `Debug TestDataGeneratorUI (Swing)` — similar UI launcher with debug VM args.
   - `Run Assembled Jar (task)` — convenience entry that triggers the `run-assembled-jar` task which builds and runs the fat JAR.
 
@@ -118,10 +119,10 @@ java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -jar tar
 Then add/choose an "Attach" config in VS Code to connect to port 5005.
 
 ## Where to look when changing behavior
-- To change CSV formatting or quoting: `TestDataGeneratorV3` — CSVWriter creation and synchronized write.
+- To change CSV formatting or quoting: `TestDataGeneratorV4` — CSVWriter creation and synchronized write.
 - To change how ranges are interpreted (e.g., inclusive/exclusive): `validateSchemaMetaData` and date/number
-  handling in `TestDataGeneratorV3`.
-- To change threading model: inner class `WriteDataToFile` in `TestDataGeneratorV3`.
+  handling in `TestDataGeneratorV4`.
+- To change threading model: inner class `WriteDataToFile` in `TestDataGeneratorV4`.
 
 If any part of this is unclear or you want more examples (unit tests, refactors, or a migration to
 ExecutorService for threading), tell me which area to expand and I'll update this file.
@@ -129,9 +130,9 @@ ExecutorService for threading), tell me which area to expand and I'll update thi
 ## How to debug (quick checks and recommended breakpoints)
 
 Typical debugging entry points:
-- `org.pgs.app.TestDataGeneratorV3.main` — argument parsing, metadata path, timing.
-- `org.pgs.app.TestDataGeneratorV3.generateTestData` — parsing + validation + dispatch loop.
-- `org.pgs.app.TestDataGeneratorV3.WriteDataToFile.writeDataToFile` — per-row generation + synchronized CSV writes.
+- `org.pgs.app.TestDataGeneratorV4.main` — argument parsing, metadata path, timing.
+- `org.pgs.app.TestDataGeneratorV4.generateTestData` — parsing + validation + dispatch loop.
+- `org.pgs.app.TestDataGeneratorV4.WriteDataToFile.writeDataToFile` — per-row generation + synchronized CSV writes.
 
 Recommended breakpoints:
 - After metadata is parsed (inspect `metaData`).
@@ -140,7 +141,7 @@ Recommended breakpoints:
 - Immediately before/after `synchronized (writer) { writer.writeNext(...) }` to check wrote rows.
 
 Quick runtime checks:
-- Verify `descriptor.json` is visible at runtime: `TestDataGeneratorV3.class.getClassLoader().getResourceAsStream("descriptor.json")` should return non-null when launched from IDE or jar.
+- Verify `descriptor.json` is visible at runtime: `TestDataGeneratorV4.class.getClassLoader().getResourceAsStream("descriptor.json")` should return non-null when launched from IDE or jar.
 - Use `--help` on class launches to check usage messages.
 
 Logging & instrumentation:
